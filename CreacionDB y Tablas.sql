@@ -1,4 +1,4 @@
-Create Database DB_Gestion_Polideportivo_G7
+/*Create Database DB_Gestion_Polideportivo_G7*/
 use DB_Gestion_Polideportivo_G7
 -- =========================================
 -- 1. SOCIOS
