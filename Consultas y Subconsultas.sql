@@ -10,7 +10,7 @@ La subconsulta relacionada mediante "NOT EXISTS" busca en la tabla PAGO si exist
 
 - Por qué resulta adecuada para resolver la problemática:
 Permite detectar aquellos clientes que nunca utilizaron el medio de pago para incentivarlos mediante promociones, por el lado
-técnico "NOT EXIST" actua como un operador de cortocircuito eficiente ya que al encontrar la primera coincidencia no procesa
+técnico "NOT EXISTS" actua como un operador de cortocircuito eficiente ya que al encontrar la primera coincidencia no procesa
 datos adicionales de forma innecesaria.
 */
 SELECT soc.id_socio, soc.dni, soc.nombre, soc.apellido, soc.email
@@ -49,7 +49,7 @@ ORDER BY pers.apellido, pers.nombre;
 /* Socios que pagan más que el promedio
 
 - Que información desea obtener:
-Los socios que realizaron pagos individuales (aprobados) cuyo importe supera el valor promedio generalde todos los pagos realizados, 
+Los socios que realizaron pagos individuales (aprobados) cuyo importe supera el valor promedio general de todos los pagos realizados, 
 ordenados de mayor a menor.
 
 - Que funcion cumple la subconsulta:
@@ -62,15 +62,15 @@ Desde lo técnico, la subconsulta es necesaria ya que en SQL no se puede usar fu
 resolverlas previamente.
 */
 SELECT soc.id_socio, soc.nombre + ' ' + soc.apellido AS socio,
-  SUM(p.importe) AS total_aportado 
+  SUM(pago.importe) AS total_aportado 
 FROM SOCIO soc
-JOIN PAGO p ON p.id_socio = soc.id_socio
-WHERE p.estado = 'APROBADO'
-  AND p.importe > (SELECT AVG(importe) FROM PAGO WHERE estado = 'APROBADO')
+JOIN PAGO pago ON pago.id_socio = soc.id_socio
+WHERE pago.estado = 'APROBADO'
+  AND pago.importe > (SELECT AVG(importe) FROM PAGO WHERE estado = 'APROBADO')
 GROUP BY soc.id_socio, soc.nombre, soc.apellido
 ORDER BY total_aportado DESC;
 
-/*
+/* Actividades no realizadas por socios para recomendar
 - Que información desea obtener:
 Actividades no realizadas (ni ahora ni en el pasado) por socios que realizan más de una actividad.
 
@@ -106,38 +106,51 @@ WHERE
     AND acti.estado = 'ACTIVA'
 ORDER BY socio, actividad_recomendada;
 
-/* 
+/* Instalaciones más demandadas en reservas de socios
+- Objetivo y necesidad del negocio:
+Permite identificar las instalaciones más pedidas para reservas particulares por parte de los socios, ayudando al negocio a
+planificar el mantenimiento preventivo de los espacios más exigidos y gestionar la disponibilidad de turnos de reserva.
+
+- Elementos técnicos aplicados:
+Combina INSTALACION, RESERVA y SOCIO mediante JOIN, filtra reservas vigentes y socios activos con WHERE, agrupa por instalación
+con GROUP BY, aplica las funciones de agregación COUNT y DISTINCT, filtra con HAVING y ordena por nivel de demanda con ORDER BY.
+
+*/
+SELECT inst.id_instalacion, inst.nombre AS instalacion, inst.tipo_instalacion, inst.ubicacion, inst.capacidad,
+    COUNT(res.id_reserva) AS total_reservas, 
+    COUNT(DISTINCT res.id_socio) AS socios_distintos
+FROM INSTALACION inst
+JOIN RESERVA res ON res.id_instalacion = inst.id_instalacion
+JOIN SOCIO soc ON soc.id_socio = res.id_socio
+WHERE res.estado <> 'CANCELADA' AND soc.estado = 'ACTIVO'
+GROUP BY inst.id_instalacion, inst.nombre, inst.tipo_instalacion, inst.ubicacion, inst.capacidad
+HAVING COUNT(res.id_reserva) >= 1
+ORDER BY total_reservas DESC, instalacion ASC;
+
+/*Actividades con más demanda
+- Objetivo y necesidad del negocio:
+Permite identificar las actividades más demandadas, además de medir la popularidad de cada una, brinda datos clave para toma
+de decisiones
+
+- Elementos técnicos aplicados:
+Se utillizan JOINS entre las tabls ACTIVIDAD, COMISION e INSCRIPCIÓN, obteniendo los registros activos, agrupando por actividad
+con GROUP BY, usando funciones de agregación simultaneas (COUNT, DISTINCT) para obtener datos relevantes de cada actividad 
+y ordenamiento descendiente por volumen de inscriptos. (ORDER BY)
 
 */
 SELECT
-    c.id_comision, a.nombre AS actividad, c.dia_semana, c.hora_inicio, c.cupo_maximo,
-    COUNT(i.id_inscripcion) AS inscriptos_activos,
-    c.cupo_maximo - COUNT(i.id_inscripcion) AS lugares_disponibles
-FROM COMISION c
-JOIN ACTIVIDAD a ON a.id_actividad = c.id_actividad
-JOIN INSCRIPCION i ON i.id_comision  = c.id_comision
-WHERE i.estado = 'ACTIVA'
-GROUP BY c.id_comision, a.nombre, c.dia_semana, c.hora_inicio, c.cupo_maximo
-HAVING COUNT(i.id_inscripcion) >= 2
-ORDER BY inscriptos_activos DESC, actividad;
+    acti.id_actividad, acti.nombre AS actividad,
+    COUNT(DISTINCT com.id_comision) AS cantidad_comisiones,
+    COUNT(ins.id_inscripcion) AS inscriptos_totales,
+    COUNT(DISTINCT ins.id_socio) AS socios_unicos
+FROM ACTIVIDAD acti
+JOIN COMISION com ON com.id_actividad = acti.id_actividad
+JOIN INSCRIPCION ins ON ins.id_comision  = com.id_comision
+WHERE acti.estado = 'ACTIVA' AND com.estado = 'ACTIVA' AND ins.estado = 'ACTIVA'
+GROUP BY acti.id_actividad, acti.nombre
+HAVING COUNT(ins.id_inscripcion) >= 1
+ORDER BY inscriptos_totales DESC, actividad ASC;
 
-/*
-*/
-SELECT
-    a.nombre AS actividad,
-    COUNT(DISTINCT c.id_comision)  AS cantidad_comisiones,
-    SUM(i.id_inscripcion)          AS inscriptos_totales,
-    MAX(c.cupo_maximo)             AS cupo_maximo,
-    MIN(c.cupo_maximo)             AS cupo_minimo,
-    AVG(c.cupo_maximo)             AS cupo_promedio
-FROM ACTIVIDAD a
-JOIN COMISION c     ON c.id_actividad = a.id_actividad
-JOIN INSCRIPCION i  ON i.id_comision  = c.id_comision
-WHERE i.estado = 'ACTIVA'
-  AND c.estado = 'ACTIVA'
-GROUP BY a.nombre
-HAVING COUNT(DISTINCT c.id_comision) >= 1
-ORDER BY inscriptos_totales DESC;
 
 /*Horarios con menos inscriptos activos
 - Objetivo y necesidad de negocio: 
@@ -153,7 +166,7 @@ SELECT com.dia_semana, com.hora_inicio,
     COUNT(ins.id_inscripcion) AS inscriptos_activos,
     SUM(com.cupo_maximo) AS cupo_total,
     SUM(com.cupo_maximo) - COUNT(ins.id_inscripcion) AS lugares_disponibles
-FROM COMISION c
+FROM COMISION com
 LEFT JOIN INSCRIPCION ins 
   ON ins.id_comision = com.id_comision AND ins.estado = 'ACTIVA'
 WHERE com.estado = 'ACTIVA'
