@@ -37,7 +37,7 @@ BEGIN
 END;
 GO
 
--- 2. Socio activo con contrato vigente en una fecha
+-- 2. Socio activo con contrato valido en la fecha, como TR_RESERVA_VALIDAR
 CREATE FUNCTION dbo.fn_SocioHabilitado
 (
     @id_socio INT,
@@ -59,7 +59,7 @@ BEGIN
         WHERE socio.id_socio = @id_socio
           AND socio.estado = 'ACTIVO'
           AND socio.fecha_alta <= @fecha_referencia
-          AND membresia.estado = 'VIGENTE'
+          AND membresia.estado IN ('VIGENTE', 'VENCIDA')
           AND @fecha_referencia BETWEEN membresia.fecha_inicio AND membresia.fecha_fin
     )
         RETURN 1;
