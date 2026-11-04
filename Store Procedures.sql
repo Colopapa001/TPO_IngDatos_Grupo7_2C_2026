@@ -165,7 +165,7 @@ BEGIN
         UPDATE SOCIO 
         SET nombre = ISNULL(@nombre, nombre),
             apellido = ISNULL(@apellido, apellido),
-            fecha_nacimiento = ISNULL(@fecha_nac, fecha_nac),
+            fecha_nacimiento = ISNULL(@fecha_nac, fecha_nacimiento),
             telefono = ISNULL(@telefono, telefono),
             email = ISNULL(@email, email),
             direccion = ISNULL(@direccion, direccion)
