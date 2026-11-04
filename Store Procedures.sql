@@ -1113,3 +1113,74 @@ BEGIN
 END;
 GO
 
+--------------------------------------------------------------------------
+-- PROCEDIMIENTOS ALMACENADOS PARA EL MANEJO DE INGRESOS Y EGRESOS AL CLUB
+--------------------------------------------------------------------------
+
+-- ===============================================
+-- Description: SP-13 Permite registrar el ingreso
+-- y egreso de socios al club.
+-- ===============================================
+
+CREATE PROCEDURE sp_RegistrarFichadasSocios
+    @id_socio INT
+AS
+BEGIN
+    -- SET NOCOUNT ON added to prevent extra result sets from
+    -- interfering with SELECT statements.
+    SET NOCOUNT ON;
+
+    -- Manejo de transacciones para garantizar la atomicidad y consistencia
+    BEGIN TRANSACTION;
+
+    BEGIN TRY
+        -- Validar que el socio exista.
+        IF NOT EXISTS (SELECT 1 FROM dbo.SOCIOS WHERE id_socio = @id_socio)
+        BEGIN
+            RAISERROR('El usuario del sistema especificado no existe.', 16, 1);
+        END
+
+        -- Validar si el socio ficho ingreso, si sí, pasa a fichar salida.
+        IF EXISTS (SELECT 1 FROM dbo.ACCESO WHERE id_socio = @id_socio 
+        AND CAST(fecha_hora_ingreso AS DATE) = CAST(GETDATE() AS DATE))
+        BEGIN
+            INSERT INTO dbo.ACCESO (id_socio, fecha_hora_egreso)
+            VALUES (@id_socio, GETDATE());
+        END
+        ELSE
+        BEGIN
+            -- Insertar la asignación registrando la fecha correspondiente
+            INSERT INTO dbo.ACCESO (id_socio, fecha_hora_ingreso)
+            VALUES (@id_socio, GETDATE());
+        END
+
+        -- Confirmar la transacción si todo salió bien
+        COMMIT TRANSACTION;
+        PRINT 'Ingreso/egreso registrado exitosamente.';
+
+    END TRY
+    BEGIN CATCH
+        -- Si hay una transacción activa, la deshacemos para proteger la integridad de la BD
+        IF @@TRANCOUNT > 0
+            ROLLBACK TRANSACTION;
+
+        -- Captura avanzada de errores
+        DECLARE @ErrorNum INT = ERROR_NUMBER();
+        DECLARE @ErrorMsg NVARCHAR(4000) = ERROR_MESSAGE();
+        DECLARE @ErrorSev INT = ERROR_SEVERITY();
+        DECLARE @ErrorState INT = ERROR_STATE();
+        DECLARE @ErrorLine INT = ERROR_LINE();
+        DECLARE @ErrorProc SYSNAME = ERROR_PROCEDURE();
+
+        -- Armamos un mensaje completo para el diagnóstico
+        DECLARE @MensajeFinal NVARCHAR(4000);
+        SET @MensajeFinal = 'Error en SP [' + ISNULL(@ErrorProc, 'sp_AsignarRolUsuario') + 
+                            '] en la línea ' + CAST(@ErrorLine AS VARCHAR(10)) + 
+                            ': ' + @ErrorMsg;
+
+        -- Propagamos el error conservando su severidad y estado original
+        RAISERROR(@MensajeFinal, @ErrorSev, @ErrorState);
+    END CATCH
+END;
+GO
+

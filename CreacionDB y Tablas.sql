@@ -1,5 +1,7 @@
 Create Database DB_Gestion_Polideportivo_G7
-use DB_Gestion_Polideportivo_G7
+GO
+USE DB_Gestion_Polideportivo_G7
+GO
 -- =========================================
 -- 1. SOCIOS
 -- =========================================
@@ -524,3 +526,23 @@ CREATE TABLE USUARIO_ROL (
         FOREIGN KEY (id_rol)
         REFERENCES ROL(id_rol)
 );
+
+-- =========================================
+-- 19. HISTORIAL DE ASISTENCIAS A COMISIONES
+-- =========================================
+
+CREATE TABLE HISTORIAL_INSCRIPCION (
+    id_historial INT IDENTITY(1,1) PRIMARY KEY,
+    id_inscripcion INT NOT NULL,
+    id_socio INT NOT NULL,
+    id_comision INT NOT NULL,
+    fecha_inscripcion DATE,
+    fecha_baja DATE,
+    estado VARCHAR(20),
+    accion_realizada VARCHAR(10), -- 'INSERT' o 'UPDATE'
+    fecha_modificacion DATETIME DEFAULT GETDATE(),
+    usuario_bd SYSNAME DEFAULT SYSTEM_USER
+);
+
+
+
