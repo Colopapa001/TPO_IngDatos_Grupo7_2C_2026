@@ -345,3 +345,46 @@ BEGIN
     END;
 END;
 GO
+
+/* ============================================================
+   TRIGGER 7: registra en la tabla HISTORIAL_INSCRIPCION los 
+   cambios que se realicen en la tabla INSCRIPCIONES para tener
+   trazabilidad de los cambios realizados con las altas y bajas
+   de los socios en comisiones. 
+   ============================================================ */
+
+CREATE TRIGGER trg_auditoria_inscripcion
+ON INSCRIPCION
+AFTER INSERT, UPDATE
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    -- Si hubo una inserción (Nuevas inscripciones)
+    IF EXISTS (SELECT 1 FROM inserted) AND NOT EXISTS (SELECT 1 FROM deleted)
+    BEGIN
+        INSERT INTO HISTORIAL_INSCRIPCION (
+            id_inscripcion, id_socio, id_comision, 
+            fecha_inscripcion, fecha_baja, estado, accion_realizada
+        )
+        SELECT 
+            i.id_inscripcion, i.id_socio, i.id_comision, 
+            i.fecha_inscripcion, i.fecha_baja, i.estado, 'INSERT'
+        FROM inserted i;
+    END
+
+    -- Si hubo una actualización (Modificaciones de estado, bajas o reactivaciones)
+    IF EXISTS (SELECT 1 FROM inserted) AND EXISTS (SELECT 1 FROM deleted)
+    BEGIN
+        INSERT INTO HISTORIAL_INSCRIPCION (
+            id_inscripcion, id_socio, id_comision, 
+            fecha_inscripcion, fecha_baja, estado, accion_realizada
+        )
+        SELECT 
+            i.id_inscripcion, i.id_socio, i.id_comision, 
+            i.fecha_inscripcion, i.fecha_baja, i.estado, 'UPDATE'
+        FROM inserted i;
+    END
+END;
+GO
+

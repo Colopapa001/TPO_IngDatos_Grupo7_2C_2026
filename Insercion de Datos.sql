@@ -31,10 +31,10 @@ VALUES
 INSERT INTO dbo.MEMBRESIA
     (id_socio, id_plan, fecha_inicio, fecha_fin, precio_contratado, estado)
 VALUES
-    (1, 1, '2026-10-01', '2026-10-31', 45000, 'VIGENTE'),
-    (2, 2, '2026-10-01', '2026-10-31', 32000, 'VIGENTE'),
-    (3, 1, '2026-10-01', '2026-10-31', 45000, 'VIGENTE'),
-    (4, 3, '2026-10-01', '2026-10-31', 70000, 'VIGENTE');
+    (1, 1, '2026-10-01', '2026-11-30', 45000, 'VIGENTE'),
+    (2, 2, '2026-10-01', '2026-11-30', 32000, 'VIGENTE'),
+    (3, 1, '2026-10-01', '2026-11-30', 45000, 'VIGENTE'),
+    (4, 3, '2026-10-01', '2026-11-30', 70000, 'VIGENTE');
 
 -- 4. ACTIVIDADES
 INSERT INTO dbo.ACTIVIDAD (nombre, descripcion, estado)
@@ -135,6 +135,7 @@ INSERT INTO dbo.ACCESO
 VALUES
     (1, '2026-10-21T10:00:00', '2026-10-21T11:30:00'),
     (2, '2026-10-20T14:00:00', '2026-10-20T15:00:00');
+
 -- =========================================
 -- 16. USUARIOS DEL SISTEMA
 -- =========================================
@@ -219,27 +220,6 @@ WHERE NOT EXISTS (
     WHERE UR.id_usuario = U.id_usuario
       AND UR.id_rol = R.id_rol
 );
-
-
--- =========================================
--- 19. VERIFICACION DE USUARIOS Y ROLES
--- =========================================
-
-SELECT
-    U.id_usuario,
-    U.nombre_usuario,
-    P.nombre,
-    P.apellido,
-    R.nombre AS rol,
-    U.estado
-FROM dbo.USUARIO_SISTEMA U
-INNER JOIN dbo.PERSONAL P
-    ON U.id_personal = P.id_personal
-INNER JOIN dbo.USUARIO_ROL UR
-    ON U.id_usuario = UR.id_usuario
-INNER JOIN dbo.ROL R
-    ON UR.id_rol = R.id_rol
-ORDER BY U.id_usuario;
 
 
 COMMIT TRANSACTION;
