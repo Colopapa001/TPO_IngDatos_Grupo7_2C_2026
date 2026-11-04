@@ -103,3 +103,42 @@ BEGIN
     RETURN @precio_contratado - @total_pagado;
 END;
 GO
+
+/*
+4- Verifica si hay una clase activa en una cierta fecha y hora para una instalación.
+Devuelve 0 si la instalación no tiene clases, 1 si hay una clase. 
+*/
+CREATE FUNCTION dbo.fn_InstalacionTieneClases (
+    @id_instalacion INT,
+    @fecha_consulta DATE,
+    @hora_inicio_consulta TIME(0),
+    @hora_fin_consulta TIME(0)
+)
+RETURNS INT
+AS
+BEGIN
+    -- Variables para almacenar el día de la semana correspondiente a la fecha
+    DECLARE @dia_semana VARCHAR(20);
+    DECLARE @tiene_clase INT = 0; 
+
+    -- Determinar el día de la semana de la fecha consultada.
+    SET @dia_semana = UPPER(DATENAME(WEEKDAY, @fecha_consulta));
+
+    -- Verificar si existe alguna comisión activa en esa instalación, 
+    -- en el mismo día de la semana, que se superponga con el horario consultado.
+    IF EXISTS (
+        SELECT 1
+        FROM dbo.COMISION AS c
+        WHERE c.id_instalacion = @id_instalacion
+          AND c.estado = 'ACTIVA'
+          AND c.dia_semana = @dia_semana
+          AND c.hora_inicio < @hora_fin_consulta
+          AND c.hora_fin > @hora_inicio_consulta
+    )
+    BEGIN
+        SET @tiene_clase = 1; -- Sí, tiene clases en ese horario
+    END
+
+    RETURN @tiene_clase;
+END;
+GO
