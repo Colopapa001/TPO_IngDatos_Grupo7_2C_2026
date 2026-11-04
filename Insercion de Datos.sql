@@ -135,25 +135,111 @@ INSERT INTO dbo.ACCESO
 VALUES
     (1, '2026-10-21T10:00:00', '2026-10-21T11:30:00'),
     (2, '2026-10-20T14:00:00', '2026-10-20T15:00:00');
-
+-- =========================================
 -- 16. USUARIOS DEL SISTEMA
+-- =========================================
+
 INSERT INTO dbo.USUARIO_SISTEMA
     (id_personal, nombre_usuario, password_hash, estado)
-VALUES
-    (1, 'ana.martinez', CONVERT(VARCHAR(64), HASHBYTES('SHA2_256', 'demo-ana'), 2), 'ACTIVO'),
-    (4, 'sergio.lopez', CONVERT(VARCHAR(64), HASHBYTES('SHA2_256', 'demo-sergio'), 2), 'ACTIVO');
 
+SELECT
+    P.id_personal,
+    V.nombre_usuario,
+    CONVERT(VARCHAR(64),
+        HASHBYTES('SHA2_256', V.password_demo), 2),
+    'ACTIVO'
+FROM (VALUES
+    ('25111222', 'ana.perez', 'Demo-Ana-2026!'),
+    ('26333444', 'diego.fernandez', 'Demo-Diego-2026!'),
+    ('27444555', 'laura.gomez', 'Demo-Laura-2026!'),
+    ('28555666', 'sergio.lopez', 'Demo-Sergio-2026!'),
+    ('29666777', 'manuel.belgrano', 'Demo-Manuel-2026!')
+) AS V(dni, nombre_usuario, password_demo)
+
+INNER JOIN dbo.PERSONAL P
+    ON P.dni = V.dni
+
+WHERE NOT EXISTS (
+    SELECT 1
+    FROM dbo.USUARIO_SISTEMA U
+    WHERE U.id_personal = P.id_personal
+       OR U.nombre_usuario = V.nombre_usuario
+);
+
+
+-- =========================================
 -- 17. ROLES
-INSERT INTO dbo.ROL (nombre, descripcion)
-VALUES
-    ('ADMINISTRADOR', N'Administración del sistema'),
-    ('PROFESOR', N'Gestión de clases y asistencias'),
-    ('MANTENIMIENTO', N'Gestión del mantenimiento');
+-- =========================================
 
--- 18. ASIGNACIÓN DE ROLES
-INSERT INTO dbo.USUARIO_ROL (id_usuario, id_rol)
-VALUES
-    (1, 2),
-    (2, 3);
+INSERT INTO dbo.ROL (nombre, descripcion)
+SELECT V.nombre, V.descripcion
+FROM (VALUES
+    ('ADMINISTRADOR', N'Administracion general'),
+    ('RECEPCION', N'Gestion de socios, membresias y pagos'),
+    ('PROFESOR', N'Gestion de actividades y asistencias'),
+    ('MANTENIMIENTO', N'Gestion de instalaciones'),
+    ('GERENCIA', N'Consultas y reportes')
+) AS V(nombre, descripcion)
+
+WHERE NOT EXISTS (
+    SELECT 1
+    FROM dbo.ROL R
+    WHERE R.nombre = V.nombre
+);
+
+
+-- =========================================
+-- 18. ASIGNACION DE ROLES
+-- =========================================
+
+INSERT INTO dbo.USUARIO_ROL
+    (id_usuario, id_rol)
+
+SELECT
+    U.id_usuario,
+    R.id_rol
+
+FROM (VALUES
+    ('ana.perez', 'PROFESOR'),
+    ('diego.fernandez', 'RECEPCION'),
+    ('laura.gomez', 'GERENCIA'),
+    ('sergio.lopez', 'MANTENIMIENTO'),
+    ('manuel.belgrano', 'ADMINISTRADOR')
+) AS V(nombre_usuario, nombre_rol)
+
+INNER JOIN dbo.USUARIO_SISTEMA U
+    ON U.nombre_usuario = V.nombre_usuario
+
+INNER JOIN dbo.ROL R
+    ON R.nombre = V.nombre_rol
+
+WHERE NOT EXISTS (
+    SELECT 1
+    FROM dbo.USUARIO_ROL UR
+    WHERE UR.id_usuario = U.id_usuario
+      AND UR.id_rol = R.id_rol
+);
+
+
+-- =========================================
+-- 19. VERIFICACION DE USUARIOS Y ROLES
+-- =========================================
+
+SELECT
+    U.id_usuario,
+    U.nombre_usuario,
+    P.nombre,
+    P.apellido,
+    R.nombre AS rol,
+    U.estado
+FROM dbo.USUARIO_SISTEMA U
+INNER JOIN dbo.PERSONAL P
+    ON U.id_personal = P.id_personal
+INNER JOIN dbo.USUARIO_ROL UR
+    ON U.id_usuario = UR.id_usuario
+INNER JOIN dbo.ROL R
+    ON UR.id_rol = R.id_rol
+ORDER BY U.id_usuario;
+
 
 COMMIT TRANSACTION;
