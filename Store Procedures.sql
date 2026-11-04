@@ -98,7 +98,7 @@ BEGIN
 
         -- Realizar la baja lógica actualizando el estado del socio
         UPDATE SOCIO 
-        SET estado = 'INACTIVO'
+        SET estado = 'BAJA'
         WHERE id_socio = @id_socio;
 
         -- Confirmar la transacción si no hay errores.
