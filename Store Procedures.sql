@@ -1014,25 +1014,22 @@ BEGIN
 
     END TRY
     BEGIN CATCH
-        -- Si hay una transacción activa, la deshacemos para proteger la BD.
+        -- Si hay una transacción activa, se deshacen los cambios para mantener la consistencia
         IF @@TRANCOUNT > 0
             ROLLBACK TRANSACTION;
 
         -- Captura avanzada de errores
-        DECLARE @ErrorNum INT = ERROR_NUMBER();
         DECLARE @ErrorMsg NVARCHAR(4000) = ERROR_MESSAGE();
         DECLARE @ErrorSev INT = ERROR_SEVERITY();
         DECLARE @ErrorState INT = ERROR_STATE();
         DECLARE @ErrorLine INT = ERROR_LINE();
         DECLARE @ErrorProc SYSNAME = ERROR_PROCEDURE();
 
-        -- Armamos un mensaje completo para el diagnóstico
         DECLARE @MensajeFinal NVARCHAR(4000);
-        SET @MensajeFinal = 'Error en SP [' + ISNULL(@ErrorProc, 'sp_RegistrarPersonalConUsuario') + 
-                            '] en la línea ' + CAST(@ErrorLine AS VARCHAR(10)) + 
-                            ': ' + @ErrorMsg;
+        SET @MensajeFinal = 'Error en SP [' + ISNULL(@ErrorProc, 'SQL_Query') + '] en la línea ' 
+        + CAST(@ErrorLine AS VARCHAR(10)) + ': ' + @ErrorMsg;
 
-        -- Propagamos el error de vuelta conservando su severidad y estado original
+        -- Propagar el error conservando severidad y estado original
         RAISERROR(@MensajeFinal, @ErrorSev, @ErrorState);
     END CATCH
 END;
@@ -1135,17 +1132,21 @@ BEGIN
 
     BEGIN TRY
         -- Validar que el socio exista.
-        IF NOT EXISTS (SELECT 1 FROM dbo.SOCIOS WHERE id_socio = @id_socio)
+        IF NOT EXISTS (SELECT 1 FROM dbo.SOCIO WHERE id_socio = @id_socio)
         BEGIN
             RAISERROR('El usuario del sistema especificado no existe.', 16, 1);
         END
 
         -- Validar si el socio ficho ingreso, si sí, pasa a fichar salida.
         IF EXISTS (SELECT 1 FROM dbo.ACCESO WHERE id_socio = @id_socio 
-        AND CAST(fecha_hora_ingreso AS DATE) = CAST(GETDATE() AS DATE))
+        AND CAST(fecha_hora_ingreso AS DATE) = CAST(GETDATE() AS DATE)
+        AND fecha_hora_egreso IS NULL)
         BEGIN
-            INSERT INTO dbo.ACCESO (id_socio, fecha_hora_egreso)
-            VALUES (@id_socio, GETDATE());
+            UPDATE  dbo.ACCESO  SET fecha_hora_egreso= GETDATE()
+            WHERE id_socio=@id_socio 
+            AND CAST(fecha_hora_ingreso AS DATE) = CAST(GETDATE() AS DATE)
+            AND fecha_hora_egreso IS NULL;
+            
         END
         ELSE
         BEGIN
@@ -1160,27 +1161,24 @@ BEGIN
 
     END TRY
     BEGIN CATCH
-        -- Si hay una transacción activa, la deshacemos para proteger la integridad de la BD
+        -- Si hay una transacción activa, se deshacen los cambios para mantener la consistencia
         IF @@TRANCOUNT > 0
             ROLLBACK TRANSACTION;
 
         -- Captura avanzada de errores
-        DECLARE @ErrorNum INT = ERROR_NUMBER();
         DECLARE @ErrorMsg NVARCHAR(4000) = ERROR_MESSAGE();
         DECLARE @ErrorSev INT = ERROR_SEVERITY();
         DECLARE @ErrorState INT = ERROR_STATE();
         DECLARE @ErrorLine INT = ERROR_LINE();
         DECLARE @ErrorProc SYSNAME = ERROR_PROCEDURE();
 
-        -- Armamos un mensaje completo para el diagnóstico
         DECLARE @MensajeFinal NVARCHAR(4000);
-        SET @MensajeFinal = 'Error en SP [' + ISNULL(@ErrorProc, 'sp_AsignarRolUsuario') + 
-                            '] en la línea ' + CAST(@ErrorLine AS VARCHAR(10)) + 
-                            ': ' + @ErrorMsg;
+        SET @MensajeFinal = 'Error en SP [' + ISNULL(@ErrorProc, 'SQL_Query') + '] en la línea ' + CAST(@ErrorLine AS VARCHAR(10)) + ': ' + @ErrorMsg;
 
-        -- Propagamos el error conservando su severidad y estado original
+        -- Propagar el error conservando severidad y estado original
         RAISERROR(@MensajeFinal, @ErrorSev, @ErrorState);
     END CATCH
 END;
 GO
+
 
