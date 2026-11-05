@@ -15,13 +15,13 @@ GO
 -- Description: SP-01 Registrar nuevo socio en el club.
 -- ====================================================
 CREATE PROCEDURE sp_RegistrarNuevoSocio
-    @nombre VARCHAR(20),
-	@apellido VARCHAR(20),
-	@dni INT,
+    @nombre NVARCHAR(80),
+	@apellido NVARCHAR(80),
+	@dni VARCHAR(10),
 	@fecha_nac DATE,
-	@telefono INT,
-	@email VARCHAR(50),
-	@direccion VARCHAR(50)
+	@telefono VARCHAR(30),
+	@email VARCHAR(254),
+	@direccion NVARCHAR(200)
 	
 AS
 BEGIN
@@ -806,8 +806,7 @@ BEGIN
         VALUES (@id_socio, @importe, GETDATE(), @concepto, UPPER(@medio_pago), 'APROBADO');
 
         -- Capturar el ID del pago generado
-        DECLARE @nuevo_id_pago INT;
-        SELECT @nuevo_id_pago = MAX(id_pago) FROM dbo.PAGO WHERE id_socio = @id_socio;
+        DECLARE @nuevo_id_pago INT = SCOPE_IDENTITY();
 
         -- Lógica de cálculo de fechas e ID de la Membresía previa (FILTRADO POR PLAN)
         DECLARE @id_membresia_existente INT;
@@ -860,10 +859,9 @@ BEGIN
             -- Si no tenía ningún registro previo para este plan, insertamos uno nuevo
             INSERT INTO dbo.MEMBRESIA (id_socio, id_plan, fecha_inicio, fecha_fin, precio_contratado, estado)
             VALUES (@id_socio, @id_plan_membresia, @fecha_inicio_nueva, @fecha_fin_nueva, @importe, 'VIGENTE');
-
-            SELECT @id_membresia_final = MAX(id_membresia) FROM dbo.MEMBRESIA WHERE id_socio = @id_socio;
+            SET @id_membresia_final = SCOPE_IDENTITY();
         END
-
+        
         -- Vincular el pago con la membresía en la tabla intermedia PAGO_MEMBRESIA
         INSERT INTO dbo.PAGO_MEMBRESIA (id_pago, id_membresia)
         VALUES (@nuevo_id_pago, @id_membresia_final);
