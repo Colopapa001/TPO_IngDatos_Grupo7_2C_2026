@@ -11,10 +11,10 @@ CREATE TABLE SOCIO (
     dni VARCHAR(20) NOT NULL,
     nombre NVARCHAR(80) NOT NULL,
     apellido NVARCHAR(80) NOT NULL,
-    fecha_nacimiento DATE NULL,
-    telefono VARCHAR(30) NULL,
-    email VARCHAR(254) NULL,
-    direccion NVARCHAR(200) NULL,
+    fecha_nacimiento DATE NOT NULL,
+    telefono VARCHAR(30) NOT NULL,
+    email VARCHAR(254) NOT NULL,
+    direccion NVARCHAR(200) NOT NULL,
     fecha_alta DATE NOT NULL
         CONSTRAINT DF_SOCIO_FECHA_ALTA
         DEFAULT (CONVERT(DATE, GETDATE())),
@@ -112,8 +112,8 @@ CREATE TABLE PERSONAL (
     dni VARCHAR(20) NOT NULL,
     nombre NVARCHAR(80) NOT NULL,
     apellido NVARCHAR(80) NOT NULL,
-    telefono VARCHAR(30) NULL,
-    email VARCHAR(254) NULL,
+    telefono VARCHAR(30) NOT NULL,
+    email VARCHAR(254) NOT NULL,
     estado VARCHAR(10) NOT NULL
         CONSTRAINT DF_PERSONAL_ESTADO DEFAULT ('ACTIVO'),
 
