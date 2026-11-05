@@ -907,14 +907,14 @@ GO
 -- con su rol inicial correspondiente de forma transaccional.
 -- ==================================================================
 CREATE PROCEDURE sp_RegistrarPersonalConUsuario
-    @nombre VARCHAR(50),
-    @apellido VARCHAR(50),
-    @dni VARCHAR(20),
-	@telefono VARCHAR(20),
-    @email VARCHAR(100),
+    @nombre NVARCHAR(80),
+    @apellido NVARCHAR(80),
+    @dni VARCHAR(10),
+	@telefono VARCHAR(30),
+    @email VARCHAR(254),
     @password_hash VARCHAR(255),
     @id_rol INT,
-	@nombre_usuario VARCHAR(50) = 'nombre.apellido'
+	@nombre_usuario VARCHAR(60) = 'nombre.apellido'
 AS
 BEGIN
     -- SET NOCOUNT ON added to prevent extra result sets from
