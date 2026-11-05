@@ -137,12 +137,12 @@ GO
 -- ===============================================================
 CREATE PROCEDURE sp_ModificarSocio
     @id_socio INT,
-    @nombre VARCHAR(20) = NULL,
-    @apellido VARCHAR(20) = NULL,
+    @nombre VARCHAR(80) = NULL,
+    @apellido VARCHAR(80) = NULL,
     @fecha_nac DATE = NULL,
-    @telefono INT = NULL,
-    @email VARCHAR(50) = NULL,
-    @direccion VARCHAR(50) = NULL
+    @telefono VARCHAR(30) = NULL,
+    @email VARCHAR(254) = NULL,
+    @direccion NVARCHAR(200) = NULL
 AS
 BEGIN
     SET NOCOUNT ON;
