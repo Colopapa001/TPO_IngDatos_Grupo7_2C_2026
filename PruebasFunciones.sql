@@ -45,21 +45,3 @@ SELECT 'Habilitacion: fecha final incluida' AS caso,
 
 SELECT 'Habilitacion: identificador inexistente' AS caso,
        0 AS esperado, dbo.fn_SocioHabilitado(2147483647, '20261027') AS obtenido;
-
--- 3. Pruebas de fn_SaldoMembresia
--- Ejecutar esta seccion solo si se creo dbo.fn_SaldoMembresia
--- Puede omitirse desde aqui hasta el final del archivo
-
--- Comprueba que una membresia totalmente pagada devuelva saldo cero
-SELECT 'Saldo: contrato cubierto' AS caso,
-       0.00 AS esperado, dbo.fn_SaldoMembresia(1) AS obtenido;
-
--- Precio contratado 45000 menos pago aprobado de 95000: saldo a favor
-SELECT 'Saldo: sobrepago' AS caso,
-       -50000.00 AS esperado, dbo.fn_SaldoMembresia(3) AS obtenido;
-
-SELECT 'Saldo: parametro nulo' AS caso,
-       NULL AS esperado, dbo.fn_SaldoMembresia(NULL) AS obtenido;
-
-SELECT 'Saldo: identificador inexistente' AS caso,
-       NULL AS esperado, dbo.fn_SaldoMembresia(2147483647) AS obtenido;

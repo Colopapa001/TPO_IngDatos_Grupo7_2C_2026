@@ -107,3 +107,24 @@ INNER JOIN PERSONAL p
     ON m.id_responsable = p.id_personal
 WHERE m.estado = 'EN_PROCESO';
 GO
+
+-- =============================================
+-- VISTA 6: SOCIOS CON MEMBRESÍA A VENCER
+-- =============================================
+
+CREATE VIEW dbo.VW_MEMBRESIAS_DIAS_RESTANTES
+AS
+SELECT 
+    m.id_membresia,
+    m.id_socio,
+    s.nombre + ' ' + s.apellido AS socio,
+    p.nombre AS plan_contratado,
+    m.fecha_inicio,
+    m.fecha_fin,
+    m.estado AS estado_membresia,
+    
+    dbo.fn_DiasRestantesMembresia(m.id_membresia) AS dias_restantes
+FROM dbo.MEMBRESIA m
+INNER JOIN dbo.SOCIO s ON s.id_socio = m.id_socio
+INNER JOIN dbo.PLAN_MEMBRESIA p ON p.id_plan = m.id_plan;
+GO
