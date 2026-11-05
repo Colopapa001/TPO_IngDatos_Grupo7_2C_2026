@@ -15,3 +15,14 @@ GO
 
 SELECT * FROM VW_MANTENIMIENTOS_ACTIVOS;
 GO
+
+SELECT * FROM dbo.VW_MEMBRESIAS_DIAS_RESTANTES;
+GO
+
+-- Filtro para ver las membresías próximas a vencer en los próximos 7 días
+SELECT * 
+FROM dbo.VW_MEMBRESIAS_DIAS_RESTANTES
+WHERE dias_restantes BETWEEN 0 AND 7
+  AND estado_membresia = 'VIGENTE'
+ORDER BY dias_restantes ASC;
+GO
