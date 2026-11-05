@@ -9,7 +9,7 @@ use DB_Gestion_Polideportivo_G7
 SET XACT_ABORT ON;
 BEGIN TRANSACTION;
 
--- 1. SOCIOS (Ampliados para probar promedios, tarjetas de crédito y cross join)
+-- 1. SOCIOS (Perfiles y estados variados para probar validaciones)
 INSERT INTO dbo.SOCIO
     (dni, nombre, apellido, fecha_nacimiento, telefono, email,
      direccion, fecha_alta, estado)
@@ -17,7 +17,10 @@ VALUES
     ('30111222', N'Juan', N'Pérez', '1998-03-12', '1144556601', 'juan@mail.com', N'Caballito', '2026-03-01', 'ACTIVO'),
     ('32222333', N'María', N'Gómez', '2001-07-24', '1144556602', 'maria@mail.com', N'Flores', '2026-04-01', 'ACTIVO'),
     ('33444555', N'Lucas', N'Fernández', '1995-11-05', '1144556603', 'lucas@mail.com', N'Almagro', '2026-05-01', 'ACTIVO'),
-    ('35666777', N'Carla', N'Sánchez', '1992-02-15', '1144556604', 'carla@mail.com', N'Belgrano', '2026-06-01', 'ACTIVO');
+    ('35666777', N'Carla', N'Sánchez', '1992-02-15', '1144556604', 'carla@mail.com', N'Belgrano', '2026-06-01', 'ACTIVO'),
+    ('36777888', N'Lucía', N'Jackson', '2000-05-14', '1144556610', 'lucia.jackson@mail.com', N'Villa Luro', '2026-07-01', 'ACTIVO'),
+    ('37888999', N'Bruno', N'Guerrero', '1988-09-22', '1144556611', 'bruno.guerrero@mail.com', N'Banfield', '2026-08-01', 'SUSPENDIDO'),
+    ('38999000', N'Elena', N'Scarpello', '1996-12-03', '1144556612', 'elena.scarpello@mail.com', N'Haedo', '2026-09-01', 'BAJA');
 
 -- 2. PLANES
 INSERT INTO dbo.PLAN_MEMBRESIA
@@ -79,7 +82,9 @@ VALUES
     (1, 1, 1, 'LUNES', '18:00', '19:30', 20, 'ACTIVA'),
     (2, 2, 2, 'MARTES', '18:00', '19:00', 20, 'ACTIVA'),
     (3, 3, 3, 'MIERCOLES', '10:00', '11:00', 20, 'ACTIVA'),
-    (4, 4, 4, 'JUEVES', '09:00', '10:00', 15, 'ACTIVA');
+    (4, 4, 4, 'JUEVES', '09:00', '10:00', 15, 'ACTIVA'),
+    (1, 1, 1, 'MARTES', '18:00', '19:30', 5, 'ACTIVA'),
+    (4, 4, 4, 'SABADO', '10:00', '11:00', 15, 'ACTIVA');
 
 -- 9. INSCRIPCIONES (Socio 1 inscripto en 2 actividades para probar recomendación)
 INSERT INTO dbo.INSCRIPCION
@@ -90,14 +95,25 @@ VALUES
     (2, 3, '2026-10-01', NULL, 'ACTIVA'), -- Socio 2 en Musculación
     (3, 1, '2026-10-01', NULL, 'ACTIVA'), -- Socio 3 en Fútbol
     (4, 1, '2026-10-01', NULL, 'ACTIVA'), -- Socio 4 en Fútbol
-    (4, 2, '2026-10-01', NULL, 'ACTIVA'); -- Socio 4 en Natación (Tiene 2 activas)
+    (4, 2, '2026-10-01', NULL, 'ACTIVA'), -- Socio 4 en Natación (Tiene 2 activas)
+    (1, 5, '2026-10-01', NULL, 'ACTIVA'), -- Socio 1 en Fútbol (comisión con poco cupo)
+    (2, 5, '2026-10-01', NULL, 'ACTIVA'),
+    (3, 5, '2026-10-01', NULL, 'ACTIVA'),
+    (4, 5, '2026-10-01', NULL, 'ACTIVA'), -- Comisión 5 queda con 4 de 5 lugares
+    (1, 6, '2026-10-01', '2026-10-15', 'BAJA'); -- Historial para probar reactivación
 
 -- 10. ASISTENCIAS
 INSERT INTO dbo.ASISTENCIA (id_inscripcion, fecha, estado)
 VALUES
     (1, '2026-10-19', 'PRESENTE'),
     (2, '2026-10-20', 'PRESENTE'),
-    (3, '2026-10-21', 'PRESENTE');
+    (3, '2026-10-21', 'PRESENTE'),
+    (1, '2026-10-26', 'AUSENTE'),
+    (2, '2026-10-27', 'JUSTIFICADA'),
+    (7, '2026-10-27', 'PRESENTE'),
+    (8, '2026-10-28', 'AUSENTE'),
+    (9, '2026-10-28', 'JUSTIFICADA'),
+    (10, '2026-10-29', 'PRESENTE');
 
 -- 11. RESERVAS
 INSERT INTO dbo.RESERVA
@@ -106,7 +122,10 @@ VALUES
     (1, 1, '2026-10-23', '16:00', '17:00', 'CONFIRMADA'),
     (2, 2, '2026-10-24', '14:00', '15:00', 'CONFIRMADA'),
     (3, 3, '2026-10-25', '10:00', '11:00', 'CONFIRMADA'),
-    (1, 2, '2026-10-26', '12:00', '13:00', 'CONFIRMADA');
+    (1, 2, '2026-10-26', '12:00', '13:00', 'CONFIRMADA'),
+    (1, 1, '2026-11-12', '16:00', '17:00', 'PENDIENTE'),
+    (2, 2, '2026-10-27', '14:00', '15:00', 'CANCELADA'),
+    (3, 3, '2026-10-28', '10:00', '11:00', 'FINALIZADA');
 
 -- 12. PAGOS (Incluye pagos altos para superar el promedio, y socio 3 sin pagar con tarjeta)
 INSERT INTO dbo.PAGO
@@ -127,7 +146,15 @@ INSERT INTO dbo.MANTENIMIENTO
      fecha_inicio, fecha_fin_estimada, fecha_fin_real, estado)
 VALUES
     (1, 4, 'PREVENTIVO', N'Revisión de iluminación de la cancha',
-     '2026-09-01', '2026-09-03', '2026-09-03', 'FINALIZADO');
+     '2026-09-01', '2026-09-03', '2026-09-03', 'FINALIZADO'),
+    (2, 5, 'CORRECTIVO', N'Reparación del sistema de filtrado de pileta',
+     '2026-11-16', '2026-11-20', NULL, 'PENDIENTE'),
+    (3, 4, 'PREVENTIVO', N'Revisión de máquinas y equipamiento del gimnasio',
+     '2026-11-06', '2026-11-10', NULL, 'EN_PROCESO'),
+    (4, 5, 'OTRO', N'Reacondicionamiento del salón multiuso',
+     '2026-10-10', '2026-10-12', NULL, 'CANCELADO'),
+    (2, 5, 'PREVENTIVO', N'Limpieza técnica de la piscina',
+     '2026-10-01', '2026-10-02', '2026-10-02', 'FINALIZADO');
 
 -- 15. ACCESOS
 INSERT INTO dbo.ACCESO
