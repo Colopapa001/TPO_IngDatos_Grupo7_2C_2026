@@ -38,6 +38,7 @@ END;
 GO
 
 -- 2. Socio activo con contrato valido en la fecha, como TR_RESERVA_VALIDAR
+-- Usa los estados actuales: no reconstruye suspensiones o bajas historicas.
 CREATE FUNCTION dbo.fn_SocioHabilitado
 (
     @id_socio INT,
@@ -69,7 +70,9 @@ END;
 GO
 
 
--- 3 dias restantes que le quedan a una membresia
+-- 3. Dias hasta la fecha de fin de una membresia
+-- Devuelve 0 el dia del vencimiento y un negativo si la fecha ya paso.
+-- Mide el plazo por fechas; no determina la habilitacion ni valida el estado.
 CREATE FUNCTION dbo.fn_DiasRestantesMembresia
 (
     @id_membresia INT
@@ -113,8 +116,17 @@ BEGIN
     DECLARE @dia_semana VARCHAR(20);
     DECLARE @tiene_clase INT = 0; 
 
-    -- Determinar el día de la semana de la fecha consultada.
-    SET @dia_semana = UPPER(DATENAME(WEEKDAY, @fecha_consulta));
+    -- 1900-01-01 fue lunes. El calculo no depende de LANGUAGE ni DATEFIRST.
+    -- El doble modulo tambien permite consultar fechas anteriores a 1900
+    SET @dia_semana = CASE ((DATEDIFF(DAY, CONVERT(DATE, '19000101'), @fecha_consulta) % 7 + 7) % 7)
+        WHEN 0 THEN 'LUNES'
+        WHEN 1 THEN 'MARTES'
+        WHEN 2 THEN 'MIERCOLES'
+        WHEN 3 THEN 'JUEVES'
+        WHEN 4 THEN 'VIERNES'
+        WHEN 5 THEN 'SABADO'
+        WHEN 6 THEN 'DOMINGO'
+    END;
 
     -- Verificar si existe alguna comisión activa en esa instalación, 
     -- en el mismo día de la semana, que se superponga con el horario consultado.
