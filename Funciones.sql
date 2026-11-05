@@ -68,39 +68,31 @@ BEGIN
 END;
 GO
 
--- 3. Devolver saldo de un contrato
-CREATE FUNCTION dbo.fn_SaldoMembresia
+
+-- 3 dias restantes que le quedan a una membresia
+CREATE FUNCTION dbo.fn_DiasRestantesMembresia
 (
     @id_membresia INT
 )
-RETURNS DECIMAL(19,2)
+RETURNS INT
 AS
 BEGIN
-    DECLARE @precio_contratado DECIMAL(12,2);
-    DECLARE @id_socio_titular INT;
-    DECLARE @total_pagado DECIMAL(19,2);
+    DECLARE @fecha_fin DATE;
 
-    SELECT @precio_contratado = precio_contratado,
-           @id_socio_titular = id_socio
+    SELECT @fecha_fin = fecha_fin
     FROM dbo.MEMBRESIA
     WHERE id_membresia = @id_membresia;
 
-    IF @precio_contratado IS NULL
+    -- Si la membresía no existe
+    IF @fecha_fin IS NULL
         RETURN NULL;
 
-    SELECT @total_pagado = SUM(pago.importe)
-    FROM dbo.PAGO_MEMBRESIA AS aplicacion
-    INNER JOIN dbo.PAGO AS pago ON pago.id_pago = aplicacion.id_pago
-    WHERE aplicacion.id_membresia = @id_membresia
-      AND pago.id_socio = @id_socio_titular
-      AND pago.estado = 'APROBADO';
-
-    -- Si la suma devuelve NULL, entonces no se cubrio ningun importe
-    IF @total_pagado IS NULL
-        SET @total_pagado = 0;
-
-    -- Usar el precio contratado, conservar sobrepagos como saldo negativo
-    RETURN @precio_contratado - @total_pagado;
+    -- Calcular días restantes hasta el vencimiento
+    RETURN DATEDIFF(
+        DAY,
+        CONVERT(DATE, GETDATE()),
+        @fecha_fin
+    );
 END;
 GO
 
