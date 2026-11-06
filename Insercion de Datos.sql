@@ -37,7 +37,9 @@ VALUES
     (1, 1, '2026-10-01', '2026-11-30', 45000, 'VIGENTE'),
     (2, 2, '2026-10-01', '2026-11-30', 32000, 'VIGENTE'),
     (3, 1, '2026-10-01', '2026-11-30', 45000, 'VIGENTE'),
-    (4, 3, '2026-10-01', '2026-11-30', 70000, 'VIGENTE');
+    (4, 3, '2026-10-01', '2026-11-30', 70000, 'VIGENTE'),
+    (5, 2, '2026-10-01', '2026-10-30', 32000, 'VENCIDA'),
+    (6, 3, '2026-10-01', '2026-10-30', 70000, 'VENCIDA');
 
 -- 4. ACTIVIDADES
 INSERT INTO dbo.ACTIVIDAD (nombre, descripcion, estado)
@@ -131,14 +133,16 @@ VALUES
 INSERT INTO dbo.PAGO
     (id_socio, importe, fecha_pago, concepto, medio_pago, estado)
 VALUES
-    (1, 45000, '2026-10-01', N'Membresía integral', 'TRANSFERENCIA', 'APROBADO'),
-    (2, 32000, '2026-10-01', N'Membresía natación', 'EFECTIVO', 'APROBADO'),
-    (3, 95000, '2026-10-01', N'Pago anual VIP', 'TRANSFERENCIA', 'APROBADO'), -- Pago alto superior al promedio
-    (4, 70000, '2026-10-01', N'Plan Premium', 'TARJETA_CREDITO', 'APROBADO'); -- Socio 4 pagó con tarjeta
+    (1, 45000, '2026-11-01', N'Membresía integral', 'TRANSFERENCIA', 'APROBADO'),
+    (2, 32000, '2026-11-01', N'Membresía natación', 'EFECTIVO', 'APROBADO'),
+    (3, 95000, '2026-11-01', N'Pago anual VIP', 'TRANSFERENCIA', 'APROBADO'), -- Pago alto superior al promedio
+    (4, 70000, '2026-11-01', N'Plan Premium', 'TARJETA_CREDITO', 'APROBADO'), -- Socio 4 pagó con tarjeta
+    (5, 32000, '2026-10-01', N'Membresía natación', 'TARJETA_DEBITO', 'APROBADO'),
+    (6, 70000, '2026-10-01', N'Plan Premium', 'TARJETA_CREDITO', 'APROBADO');
 
 -- 13. RELACIÓN ENTRE PAGOS Y MEMBRESÍAS
 INSERT INTO dbo.PAGO_MEMBRESIA (id_pago, id_membresia)
-VALUES (1, 1), (2, 2), (3, 3), (4, 4);
+VALUES (1, 1), (2, 2), (3, 3), (4, 4), (5,5), (6,6);
 
 -- 14. MANTENIMIENTOS
 INSERT INTO dbo.MANTENIMIENTO
